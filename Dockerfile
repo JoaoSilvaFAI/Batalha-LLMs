@@ -20,3 +20,12 @@ EXPOSE 8501
 
 # Comando para rodar a aplicação
 ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+
+# Copia o script para dentro do container
+COPY start.sh /start.sh
+
+# Dá permissão de execução
+RUN chmod +x /start.sh
+
+# Define o script como o comando de inicialização
+CMD ["/start.sh"]
