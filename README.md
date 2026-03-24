@@ -125,18 +125,34 @@ Você pode rodar esta aplicação de duas formas:
 
 ### Opção A: Execução via Docker (Recomendado)
 
-Esta opção garante que todas as dependências estejam corretas.
+Esta opção é 100% independente do seu Windows, pois roda tanto a aplicação quanto o servidor Ollama dentro do container.
 
 1. **Pré-requisitos**: Docker e Docker Compose instalados.
-2. **Ollama**: Garanta que o Ollama está rodando no seu Windows (`ollama serve`).
-3. **Comando**:
+2. **Comando**:
    ```bash
    docker-compose up --build
    ```
-4. **Acesso**: Abra **http://localhost:8501**
+3. **O que acontece automaticamente**:
+   - O Docker instala o servidor Ollama internamente.
+   - O script de inicialização baixa automaticamente o modelo `deepseek-r1:1.5b`.
+   - O Streamlit sobe na porta `8501`.
+4. **Acesso**: Abra **[http://localhost:8501](http://localhost:8501)**
 
-> [!NOTE]
-> O Docker está configurado para acessar o Ollama do seu Windows automaticamente via `host.docker.internal`.
+---
+
+### 📥 Baixando novas LLMs no Docker
+
+Se você quiser usar outros modelos além do padrão, você deve baixá-los dentro do container em execução:
+
+```bash
+# 1. Verifique o nome do seu container (ex: batalha-llms-app-1)
+docker ps
+
+# 2. Execute o comando de pull dentro do container
+docker exec -it batalha-llms-app-1 ollama pull llama3.2
+```
+
+Os modelos baixados serão persistidos no volume `ollama_data` configurado no `docker-compose.yml`.
 
 ---
 
@@ -189,5 +205,6 @@ Ambos os modelos são instruídos a responder seguindo rigorosamente esta estrut
 
 ## 🐛 Solução de Problemas
 
-- **Conexão Recusada no Docker**: Verifique se o Ollama no Windows está permitindo conexões externas (variável `OLLAMA_HOST=0.0.0.0`).
+- **Conexão Recusada (Local Python)**: Se estiver rodando LOCAL (Opção B), verifique se o Ollama no Windows está permitindo conexões externas (variável `OLLAMA_HOST=0.0.0.0`) e se o Firewall permite a porta 11434.
+- **Erro de Rede no Docker Build**: Se o `apt-get` falhar durante o build, o download do Ollama pode ser interrompido; tente rodar o build novamente.
 - **Erro 500 ao carregar modelo**: Geralmente indica falta de RAM para rodar o modelo local selecionado. Tente um modelo menor como `deepseek-r1:1.5b`.
