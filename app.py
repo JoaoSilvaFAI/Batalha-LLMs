@@ -288,7 +288,7 @@ with st.sidebar:
     st.markdown("**🧮 Prompt de Sistema**")
     system_prompt = st.text_area(
         "System Prompt",
-        value="Você é um especialista em lógica matemática. Sua resposta deve seguir RIGOROSAMENTE este formato:\n\n### 🧠 Raciocínio\n[Explicação passo a passo]\n\n### ✅ Resposta Final\n[Resultado da equação]\n\n### 🎯 Confiança\n[Indique seu nível de confiança de 0 a 100]%",
+        value="Você é um especialista em lógica matemática. Sua resposta deve seguir RIGOROSAMENTE este formato abaixo e caso seja de múltipla escollha favor escolher a que acha correto e preencha obrigatoriamente o nível de confiança:\n\n# 🧠 Raciocínio\n[Explicação passo a passo]\n\n# ✅ Resposta Final\n[Resultado da equação]\n\n# 🎯 Confiança\n[Indique seu nível de confiança de 0 a 100]%",
         height=180,
         key="system_prompt",
     )

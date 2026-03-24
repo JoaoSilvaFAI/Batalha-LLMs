@@ -1,6 +1,6 @@
 # ⚔️ LLM Battle Arena — Documentação Completa
 
-Comparador visual entre **OLMO-3 local (Ollama)** e **GPT via OpenAI API**, focado em lógica matemática.
+Comparador visual entre **Deepseek-r1:1.5b local (Ollama)** e **GPT via OpenAI API**, focado em lógica matemática.
 
 ---
 
@@ -21,7 +21,7 @@ llm_comparator/
 
 - Python 3.10+
 - [Ollama](https://ollama.com) instalado e rodando
-- Modelo `olmo3:7b` baixado no Ollama
+- Modelo `deepseek-r1:1.5b` baixado no Ollama
 - API Key da OpenAI
 
 ### 2. Instalar dependências
@@ -56,7 +56,7 @@ O app abrirá automaticamente em: **http://localhost:8501**
 ## 🖥️ Como usar
 
 1. **Sidebar (barra lateral esquerda)**
-   - Confirme o modelo Ollama (`olmo3:7b`)
+   - Confirme o modelo Ollama (`deepseek-r1:1.5b`)
    - Confirme o endpoint (`http://localhost:11434`)
    - Insira sua **OpenAI API Key** (campo senha)
    - Escolha o modelo GPT desejado
@@ -110,7 +110,7 @@ Edite o campo **System Prompt** na sidebar para adaptar o comportamento dos mode
 ### Payload Ollama (`/api/chat`)
 ```json
 {
-  "model": "olmo3:7b",
+  "model": "deepseek-r1:1.5b",
   "messages": [
     { "role": "system", "content": "..." },
     { "role": "user",   "content": "2x + 3 = 7" }
@@ -148,7 +148,7 @@ Esta opção garante que todas as dependências estejam corretas.
    ```
 2. **Rodar o App**:
    ```bash
-   streamlit run app.py
+  python -m streamlit run app.py
    ```
 
 ---
@@ -187,47 +187,7 @@ Ambos os modelos são instruídos a responder seguindo rigorosamente esta estrut
 
 ---
 
----
-
-## 🔌 Configuração para Docker no Windows (Ollama)
-
-Se você estiver rodando a aplicação via Docker e o Ollama no Windows (host), são necessários dois ajustes para que o container consiga "enxergar" o Ollama:
-
-### 1. Permitir Conexões Externas no Ollama
-Por padrão, o Ollama só ouve o `localhost`. Para permitir que o container acesse:
-1. Feche o Ollama completamente.
-2. Nas **Variáveis de Ambiente** do Windows, adicione uma nova variável de sistema:
-   - **Nome:** `OLLAMA_HOST`
-   - **Valor:** `0.0.0.0`
-3. Reinicie o Ollama.
-
-### 2. Liberar Porta no Firewall do Windows
-O Firewall costuma bloquear a rede do Docker.
-1. Vá em **Windows Defender Firewall com Segurança Avançada**.
-2. Em **Regras de Entrada**, crie uma **Nova Regra**.
-3. Tipo: **Porta** -> **TCP** -> **11434**.
-4. Ação: **Permitir a conexão**.
-5. Perfil: Marque todos (**Domínio, Particular, Público**).
-6. Nome: `Ollama External Access`.
-
----
-
-## 🛠️ Detalhes da Infraestrutura Docker
-
-### [Dockerfile](file:///c:/Users/joao.silva/OneDrive%20-%20FAIUFSCar/Documentos/FAI-UFSCAR%20ESTUDO/LOCAL%20x%20NUVEM%20DOCKER/Batalha-LLMs/Dockerfile)
-- Base: `python:3.11-slim-bookworm` (Estável e leve).
-- Expõe a porta `8501` para o Streamlit.
-- Configurado para rodar `streamlit run app.py` no entrypoint.
-
-### [docker-compose.yml](file:///c:/Users/joao.silva/OneDrive%20-%20FAIUFSCar/Documentos/FAI-UFSCAR%20ESTUDO/LOCAL%20x%20NUVEM%20DOCKER/Batalha-LLMs/docker-compose.yml)
-- Mapeia o volume local para `/app` permitindo live-reload.
-- Define `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
-- Utiliza `extra_hosts` para mapear `host.docker.internal` para o gateway do host.
-
----
-
 ## 🐛 Solução de Problemas
 
-- **"Não foi possível listar modelos"**: Certifique-se de que seguiu os passos de `OLLAMA_HOST` e Firewall acima.
-- **Erro de Rede no Docker Build**: Se o `apt-get` falhar durante o build, verifique sua conexão ou tente simplificar o Dockerfile removendo dependências de sistema não essenciais.
-- **Modelo não encontrado**: Verifique se você já fez o `ollama pull` do modelo desejado no seu Windows.
+- **Conexão Recusada no Docker**: Verifique se o Ollama no Windows está permitindo conexões externas (variável `OLLAMA_HOST=0.0.0.0`).
+- **Erro 500 ao carregar modelo**: Geralmente indica falta de RAM para rodar o modelo local selecionado. Tente um modelo menor como `deepseek-r1:1.5b`.
