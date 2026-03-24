@@ -269,15 +269,15 @@ with st.sidebar:
     available_models = get_ollama_models(ollama_url)
     
     if available_models:
-        # Tenta selecionar olmo-3:7b por padrão se disponível, senão o primeiro da lista
+        # Tenta selecionar deepseek-r1:1.5b por padrão se disponível, senão o primeiro da lista
         default_idx = 0
-        if "olmo-3:7b" in available_models:
-            default_idx = available_models.index("olmo-3:7b")
+        if "deepseek-r1:1.5b" in available_models:
+            default_idx = available_models.index("deepseek-r1:1.5b")
         
         ollama_model = st.selectbox("Modelo", options=available_models, index=default_idx, key="ollama_model")
     else:
         st.warning("⚠️ Não foi possível listar modelos do Ollama. Verifique o endpoint.")
-        ollama_model = st.text_input("Modelo (Manual)", value="olmo-3:7b", key="ollama_model_manual")
+        ollama_model = st.text_input("Modelo (Manual)", value="deepseek-r1:1.5b", key="ollama_model_manual")
 
     st.markdown("---")
     st.markdown("**🟣 OpenAI API**")
