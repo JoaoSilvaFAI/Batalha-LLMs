@@ -1,3 +1,8 @@
+"""
+Módulo Principal da LLM Battle Arena.
+Este aplicativo Streamlit compara o desempenho de modelos de linguagem locais (via Ollama)
+e modelos em nuvem (via OpenAI) para a resolução de problemas de lógica matemática.
+"""
 import streamlit as st
 import requests
 import time
@@ -5,7 +10,7 @@ import json
 from openai import OpenAI
 
 # ──────────────────────────────────────────────
-# PAGE CONFIG
+# CONFIGURAÇÃO DA PÁGINA
 # ──────────────────────────────────────────────
 st.set_page_config(
     page_title="LLM Battle Arena",
@@ -15,7 +20,7 @@ st.set_page_config(
 )
 
 # ──────────────────────────────────────────────
-# CUSTOM CSS
+# ESTILOS CSS CUSTOMIZADOS
 # ──────────────────────────────────────────────
 st.markdown("""
 <style>
@@ -25,12 +30,13 @@ html, body, [class*="css"] {
     font-family: 'Syne', sans-serif;
 }
 
+/* Estilo Geral da Aplicação */
 .stApp {
     background: #0a0a0f;
     color: #e8e8f0;
 }
 
-/* Header */
+/* Cabeçalho da Arena */
 .arena-header {
     text-align: center;
     padding: 2rem 0 1rem 0;
@@ -55,7 +61,7 @@ html, body, [class*="css"] {
     margin-top: -0.3rem;
 }
 
-/* Contestant cards */
+/* Cartões dos Competidores (LLMs) */
 .contestant-card {
     border-radius: 16px;
     padding: 1.2rem 1.5rem;
@@ -85,7 +91,7 @@ html, body, [class*="css"] {
     color: #888;
 }
 
-/* Response boxes */
+/* Caixas de Resposta dos Modelos */
 .response-box {
     background: #11111c;
     border-radius: 12px;
@@ -104,7 +110,7 @@ html, body, [class*="css"] {
     font-style: italic;
 }
 
-/* Metric chips */
+/* Chips de Métricas (Latência, Tokens, Confiança) */
 .metrics-row {
     display: flex;
     gap: 0.6rem;
@@ -123,7 +129,7 @@ html, body, [class*="css"] {
 .chip-tokens   { background: #2a1a0d; color: #ffb23d; border: 1px solid #4d300d; }
 .chip-conf     { background: #1a0d2a; color: #d97dff; border: 1px solid #3d1a4d; }
 
-/* VS divider */
+/* Divisor Visual VS */
 .vs-divider {
     display: flex;
     align-items: center;
@@ -145,7 +151,7 @@ html, body, [class*="css"] {
     box-shadow: 0 0 30px rgba(108,99,255,0.5);
 }
 
-/* Input area */
+/* Seção de Entrada de Texto */
 .input-section {
     background: #11111c;
     border-radius: 16px;
@@ -154,7 +160,7 @@ html, body, [class*="css"] {
     margin-bottom: 1.5rem;
 }
 
-/* Verdict banner */
+/* Banner de Veredito (Vencedor) */
 .verdict-banner {
     border-radius: 16px;
     padding: 1.2rem 1.8rem;
@@ -168,7 +174,7 @@ html, body, [class*="css"] {
 .verdict-api    { background: #1a0a2e; border: 1px solid #bf6cff; color: #bf6cff; }
 .verdict-tie    { background: #1a1a0a; border: 1px solid #ffd93d; color: #ffd93d; }
 
-/* Sidebar */
+/* Barra Lateral (Sidebar) */
 section[data-testid="stSidebar"] {
     background: #0d0d18 !important;
     border-right: 1px solid #1e1e3a;
@@ -180,7 +186,7 @@ section[data-testid="stSidebar"] .stSelectbox select {
     color: #e8e8f0 !important;
 }
 
-/* Scrollable history */
+/* Histórico de Consultas */
 .history-item {
     background: #11111c;
     border-radius: 8px;
@@ -192,7 +198,7 @@ section[data-testid="stSidebar"] .stSelectbox select {
     cursor: pointer;
 }
 
-/* Streamlit overrides */
+/* Sobrescrita de Estilos do Streamlit */
 .stButton > button {
     background: linear-gradient(135deg, #6c63ff, #9b59ff) !important;
     color: white !important;
@@ -227,17 +233,18 @@ div[data-testid="stMarkdownContainer"] p { color: #c0c0d8; }
 """, unsafe_allow_html=True)
 
 # ──────────────────────────────────────────────
-# SESSION STATE
+# ESTADO DA SESSÃO (SESSION STATE)
 # ──────────────────────────────────────────────
+# Inicializa as variáveis de estado se elas não existirem
 if "history" not in st.session_state:
-    st.session_state.history = []
+    st.session_state.history = []  # Armazena o histórico de batalhas
 if "result_local" not in st.session_state:
-    st.session_state.result_local = None
+    st.session_state.result_local = None  # Armazena o último resultado do modelo local
 if "result_api" not in st.session_state:
-    st.session_state.result_api = None
+    st.session_state.result_api = None  # Armazena o último resultado do modelo em nuvem
 
 # ──────────────────────────────────────────────
-# SIDEBAR — SETTINGS
+# BARRA LATERAL — CONFIGURAÇÕES
 # ──────────────────────────────────────────────
 with st.sidebar:
     st.markdown("### ⚙️ Configurações")
@@ -250,6 +257,7 @@ with st.sidebar:
     st.caption(f"Endpoint: `{ollama_url}`")
 
     def get_ollama_models(base_url):
+        """Busca a lista de modelos disponíveis no endpoint do Ollama."""
         try:
             resp = requests.get(f"{base_url.rstrip('/')}/api/tags", timeout=5)
             resp.raise_for_status()
@@ -294,11 +302,19 @@ with st.sidebar:
         st.caption("Nenhuma consulta ainda.")
 
 # ──────────────────────────────────────────────
-# HELPERS
+# FUNÇÕES AUXILIARES (HELPERS)
 # ──────────────────────────────────────────────
 
 def call_ollama(prompt: str, system: str, model: str, base_url: str) -> dict:
-    """Call Ollama local API and return result dict."""
+    """
+    Faz uma chamada à API local do Ollama e retorna um dicionário com o resultado.
+    
+    Args:
+        prompt: O problema matemático enviado pelo usuário.
+        system: O prompt de sistema que define o comportamento do modelo.
+        model: O nome do modelo local a ser utilizado.
+        base_url: A URL base do endpoint do Ollama.
+    """
     url = f"{base_url.rstrip('/')}/api/chat"
     payload = {
         "model": model,
@@ -315,7 +331,7 @@ def call_ollama(prompt: str, system: str, model: str, base_url: str) -> dict:
         data     = resp.json()
         elapsed  = time.time() - t0
         content  = data.get("message", {}).get("content", "")
-        # token counts from Ollama response
+        # Contagem de tokens da resposta do Ollama
         p_tokens = data.get("prompt_eval_count", 0)
         c_tokens = data.get("eval_count", 0)
         conf     = extract_confidence(content)
@@ -334,7 +350,15 @@ def call_ollama(prompt: str, system: str, model: str, base_url: str) -> dict:
 
 
 def call_openai(prompt: str, system: str, model: str, api_key: str) -> dict:
-    """Call OpenAI API and return result dict."""
+    """
+    Faz uma chamada à API da OpenAI e retorna um dicionário com o resultado.
+    
+    Args:
+        prompt: O problema matemático enviado pelo usuário.
+        system: O prompt de sistema que define o comportamento do modelo.
+        model: O nome do modelo GPT a ser utilizado.
+        api_key: A chave de API da OpenAI.
+    """
     if not api_key:
         return {"ok": False, "text": "❌ Insira sua OpenAI API Key na barra lateral.", "latency": 0,
                 "prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "confidence": None}
@@ -368,7 +392,10 @@ def call_openai(prompt: str, system: str, model: str, api_key: str) -> dict:
 
 
 def extract_confidence(text: str) -> float | None:
-    """Try to extract a confidence percentage from the model's response."""
+    """
+    Tenta extrair uma porcentagem de confiança da resposta do modelo usando Regex.
+    Procura por padrões como 'confiança: 90%' ou '90%'.
+    """
     import re
     patterns = [
         r'confiança[:\s]*(\d{1,3})\s*%',
@@ -386,6 +413,7 @@ def extract_confidence(text: str) -> float | None:
 
 
 def confidence_color(val):
+    """Retorna uma cor (hex) baseada no nível de confiança."""
     if val is None:
         return "#555"
     if val >= 80:
@@ -396,7 +424,10 @@ def confidence_color(val):
 
 
 def verdict(r_local, r_api):
-    """Return a verdict banner HTML based on results."""
+    """
+    Retorna um banner HTML com o veredito da batalha baseado nos resultados.
+    A pontuação leva em conta latência e confiança.
+    """
     if not r_local or not r_api:
         return ""
     if not r_local["ok"] and not r_api["ok"]:
@@ -404,14 +435,14 @@ def verdict(r_local, r_api):
 
     score_local = score_api = 0
 
-    # Latency: lower is better
+    # Latência: menor é melhor
     if r_local["ok"] and r_api["ok"]:
         if r_local["latency"] < r_api["latency"]:
             score_local += 1
         else:
             score_api += 1
 
-    # Confidence: higher is better
+    # Confiança: maior é melhor
     cl = r_local.get("confidence") or 0
     ca = r_api.get("confidence") or 0
     if cl > ca:
@@ -428,6 +459,7 @@ def verdict(r_local, r_api):
 
 
 def render_metrics(r: dict, side: str):
+    """Gera o HTML para exibir os 'chips' de métricas (latência, tokens, confiança)."""
     lat_html   = f'<span class="metric-chip chip-latency">⚡ {r["latency"]:.2f}s</span>'
     tok_html   = f'<span class="metric-chip chip-tokens">🪙 {r["total_tokens"]} tokens</span>'
     conf_val   = r.get("confidence")
@@ -436,7 +468,7 @@ def render_metrics(r: dict, side: str):
     return f'<div class="metrics-row">{lat_html}{tok_html}{conf_html}</div>'
 
 # ──────────────────────────────────────────────
-# HEADER
+# CABEÇALHO (HEADER)
 # ──────────────────────────────────────────────
 st.markdown("""
 <div class="arena-header">
@@ -446,7 +478,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ──────────────────────────────────────────────
-# INPUT SECTION
+# SEÇÃO DE ENTRADA (INPUT)
 # ──────────────────────────────────────────────
 st.markdown('<div class="input-section">', unsafe_allow_html=True)
 equation = st.text_area(
@@ -470,7 +502,7 @@ if clear_btn:
     st.rerun()
 
 # ──────────────────────────────────────────────
-# RUN COMPARISON
+# EXECUÇÃO DA COMPARAÇÃO (RUN)
 # ──────────────────────────────────────────────
 if run_btn and equation.strip():
     with st.spinner("⚔️ Batalha em andamento..."):
@@ -480,7 +512,7 @@ if run_btn and equation.strip():
         with col_prog2:
             st.info(f"🟣 Consultando **{openai_model}** via API...")
 
-        # Run both concurrently using threads
+        # Executa ambas as chamadas simultaneamente usando threads para ganhar tempo
         import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
             fut_local = executor.submit(call_ollama, equation, system_prompt, ollama_model, ollama_url)
@@ -491,7 +523,7 @@ if run_btn and equation.strip():
     st.session_state.result_local = r_local
     st.session_state.result_api   = r_api
 
-    # Save to history
+    # Salva no histórico da sessão
     st.session_state.history.append({
         "equation": equation,
         "local": r_local,
@@ -503,7 +535,7 @@ elif run_btn:
     st.warning("⚠️ Digite uma equação antes de batalhar!")
 
 # ──────────────────────────────────────────────
-# RESULTS PANEL
+# PAINEL DE RESULTADOS
 # ──────────────────────────────────────────────
 r_local = st.session_state.result_local
 r_api   = st.session_state.result_api
@@ -545,6 +577,6 @@ with col_right:
     else:
         st.markdown('<div class="response-box"><span class="response-placeholder">A resposta da API aparecerá aqui...</span></div>', unsafe_allow_html=True)
 
-# Verdict
+# Exibição do Veredito (se ambos os resultados existirem)
 if r_local and r_api:
     st.markdown(verdict(r_local, r_api), unsafe_allow_html=True)

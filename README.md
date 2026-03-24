@@ -40,13 +40,13 @@ ollama serve
 ollama list
 
 # Se não tiver o modelo, baixar:
-ollama pull olmo3:7b
+ollama pull deepseek-r1:1.5b
 ```
 
 ### 4. Rodar o app
 
 ```bash
-streamlit run app.py
+python -m streamlit run app.py
 ```
 
 O app abrirá automaticamente em: **http://localhost:8501**
